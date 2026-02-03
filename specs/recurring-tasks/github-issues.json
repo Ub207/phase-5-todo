@@ -1,0 +1,89 @@
+[
+  {
+    "title": "Task 1.1: Create Component - Configure Dapr Components",
+    "body": "## Description\nCreate React component\n\n## Steps\n1. Create component file\n2. Design component structure\n3. Implement state management\n4. Add API integration\n5. Add validation\n6. Write component tests\n\n## Acceptance Criteria\n- [ ] Component renders correctly\n- [ ] State management works\n- [ ] API integration successful\n- [ ] Tests passing\n\n## Test Cases\n- Render test\n- User interaction tests\n- API integration tests\n- Error handling tests\n\n## Code References\n- `../todo_phase3/frontend/components/TaskForm.tsx`\n- `../todo_phase3/frontend/components/TaskList.tsx`\n\n## Estimates\n- Duration: 4.0 hours\n- Complexity: Complex\n\n",
+    "labels": [
+      "implementation",
+      "frontend",
+      "complexity-complex"
+    ],
+    "milestone": "Implementation",
+    "assignees": []
+  },
+  {
+    "title": "Task 2.1: Design Database Schema - Create Database Migrations",
+    "body": "## Description\nDesign database schema following existing conventions\n\n## Steps\n1. Review existing models\n2. Create schema design\n3. Define indexes and constraints\n4. Document relationships\n\n## Acceptance Criteria\n- [ ] Schema includes all required fields\n- [ ] Indexes defined for optimization\n- [ ] Foreign keys properly defined\n\n## Test Cases\n- Schema validation passes\n- Constraints work correctly\n\n## Code References\n- `../todo_phase3/backend/src/models/task.py`\n- `../todo_phase3/backend/src/models/user.py`\n\n## Estimates\n- Duration: 2.0 hours\n- Complexity: Medium\n\n",
+    "labels": [
+      "implementation",
+      "database",
+      "complexity-medium"
+    ],
+    "milestone": "Implementation",
+    "assignees": []
+  },
+  {
+    "title": "Task 2.2: Create Migration Script - Create Database Migrations",
+    "body": "## Description\nCreate Alembic migration for schema\n\n## Steps\n1. Generate migration file\n2. Add upgrade() logic\n3. Add downgrade() logic\n4. Test migration locally\n\n## Acceptance Criteria\n- [ ] Migration runs successfully\n- [ ] Rollback works correctly\n- [ ] No data loss\n\n## Test Cases\n- Run migration up/down 3 times\n- Verify schema matches design\n\n## Code References\n- `../todo_phase3/backend/alembic/versions/`\n\n## Estimates\n- Duration: 1.0 hours\n- Complexity: Simple\n\n## Dependencies\n- Task 2.1\n\n",
+    "labels": [
+      "implementation",
+      "database",
+      "complexity-simple"
+    ],
+    "milestone": "Implementation",
+    "assignees": []
+  },
+  {
+    "title": "Task 3.1: Create Data Model - Implement Backend API",
+    "body": "## Description\nCreate SQLAlchemy model\n\n## Steps\n1. Create model file\n2. Define model class\n3. Add relationships\n4. Implement validation\n\n## Acceptance Criteria\n- [ ] Model matches schema\n- [ ] Relationships correct\n- [ ] Validation works\n\n## Test Cases\n- Test model creation\n- Test relationships\n- Test validation\n\n## Code References\n- `../todo_phase3/backend/src/models/task.py`\n- `../todo_phase3/backend/src/models/user.py`\n\n## Estimates\n- Duration: 2.0 hours\n- Complexity: Medium\n\n",
+    "labels": [
+      "implementation",
+      "backend",
+      "complexity-medium"
+    ],
+    "milestone": "Implementation",
+    "assignees": []
+  },
+  {
+    "title": "Task 3.2: Create Service Layer - Implement Backend API",
+    "body": "## Description\nImplement business logic\n\n## Steps\n1. Create service file\n2. Implement CRUD operations\n3. Add business logic\n4. Add error handling\n\n## Acceptance Criteria\n- [ ] All operations work\n- [ ] Proper error handling\n- [ ] Unit tests >90% coverage\n\n## Test Cases\n- Test CRUD operations\n- Test business logic\n- Test error scenarios\n\n## Code References\n- `../todo_phase3/backend/src/services/task_service.py`\n\n## Estimates\n- Duration: 3.0 hours\n- Complexity: Complex\n\n## Dependencies\n- Task 3.1\n\n",
+    "labels": [
+      "implementation",
+      "backend",
+      "complexity-complex"
+    ],
+    "milestone": "Implementation",
+    "assignees": []
+  },
+  {
+    "title": "Task 3.3: Implement API Endpoints - Implement Backend API",
+    "body": "## Description\nCreate FastAPI route handlers\n\n## Steps\n1. Create API router file\n2. Define route handlers\n3. Add authentication\n4. Add validation\n5. Write API tests\n\n## Acceptance Criteria\n- [ ] All endpoints functional\n- [ ] Authentication enforced\n- [ ] Validation works\n- [ ] API tests passing\n\n## Test Cases\n- Test each endpoint\n- Test authentication\n- Test validation\n- Test error handling\n\n## Code References\n- `../todo_phase3/backend/src/api/tasks.py`\n- `../todo_phase3/backend/src/api/auth.py`\n\n## Estimates\n- Duration: 3.0 hours\n- Complexity: Complex\n\n## Dependencies\n- Task 3.2\n\n",
+    "labels": [
+      "implementation",
+      "backend",
+      "complexity-complex"
+    ],
+    "milestone": "Implementation",
+    "assignees": []
+  },
+  {
+    "title": "Task 4.1: Create Component - Implement Frontend Components",
+    "body": "## Description\nCreate React component\n\n## Steps\n1. Create component file\n2. Design component structure\n3. Implement state management\n4. Add API integration\n5. Add validation\n6. Write component tests\n\n## Acceptance Criteria\n- [ ] Component renders correctly\n- [ ] State management works\n- [ ] API integration successful\n- [ ] Tests passing\n\n## Test Cases\n- Render test\n- User interaction tests\n- API integration tests\n- Error handling tests\n\n## Code References\n- `../todo_phase3/frontend/components/TaskForm.tsx`\n- `../todo_phase3/frontend/components/TaskList.tsx`\n\n## Estimates\n- Duration: 4.0 hours\n- Complexity: Complex\n\n",
+    "labels": [
+      "implementation",
+      "frontend",
+      "complexity-complex"
+    ],
+    "milestone": "Implementation",
+    "assignees": []
+  },
+  {
+    "title": "Task 5: End-to-End Testing",
+    "body": "## Description\nEnd-to-End Testing\n\n## Steps\n1. Implement task\n\n## Acceptance Criteria\n- [ ] Task complete\n\n## Test Cases\n- Verify functionality\n\n## Estimates\n- Duration: 4.0 hours\n- Complexity: Medium\n\n",
+    "labels": [
+      "implementation",
+      "complexity-medium"
+    ],
+    "milestone": "Implementation",
+    "assignees": []
+  }
+]

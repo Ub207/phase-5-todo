@@ -1,0 +1,39 @@
+{
+  "features": {
+    "recurring-tasks": {
+      "kafka_topics": [],
+      "dapr_components": [
+        "pubsub",
+        "statestore"
+      ],
+      "db_tables": [
+        "recurring_patterns",
+        "recurrence_exceptions",
+        "task_instances"
+      ],
+      "api_endpoints": [
+        "/api/tasks/recurring/",
+        "/api/tasks/recurring"
+      ],
+      "frontend_components": [
+        "metadata"
+      ]
+    }
+  },
+  "shared_infrastructure": {
+    "kafka": [],
+    "dapr": [
+      "pubsub",
+      "statestore"
+    ],
+    "database": [
+      "recurring_patterns",
+      "recurrence_exceptions",
+      "task_instances"
+    ],
+    "redis": [
+      "recurring-tasks-redis"
+    ]
+  },
+  "external_services": []
+}
