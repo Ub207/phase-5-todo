@@ -8,4 +8,6 @@ engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-db_session = SessionLocal()
+# Create session lazily when needed
+def get_db_session():
+    return SessionLocal()
