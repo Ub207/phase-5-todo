@@ -1,8 +1,9 @@
 # main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routers import auth, tasks
 
-app = FastAPI()
+app = FastAPI(title="Todo Phase5 API", version="1.0.0")
 
 # CORS settings
 app.add_middleware(
@@ -24,13 +25,38 @@ async def startup_event():
         from database import engine, Base
         import models
         Base.metadata.create_all(bind=engine)
-        print("✅ Database initialized successfully")
+        print("Database initialized successfully")
     except Exception as e:
-        print(f"⚠️ Database initialization error: {e}")
+        print(f"Database initialization error: {e}")
+
+# Include routers
+app.include_router(auth.router)
+app.include_router(tasks.router)
 
 @app.get("/")
 def root():
-    return {"status": "ok", "message": "Todo Phase5 Backend API", "endpoints": ["/health", "/recurring/run", "/docs"]}
+    return {
+        "status": "ok",
+        "message": "Todo Phase5 Backend API",
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs",
+            "auth": {
+                "register": "POST /api/auth/register",
+                "login": "POST /api/auth/login"
+            },
+            "tasks": {
+                "list": "GET /api/tasks/{user_id}",
+                "create": "POST /api/tasks/{user_id}",
+                "update": "PUT /api/tasks/{user_id}/{task_id}",
+                "complete": "PUT /api/tasks/{user_id}/{task_id}/complete",
+                "delete": "DELETE /api/tasks/{user_id}/{task_id}"
+            },
+            "legacy": {
+                "recurring": "GET /recurring/run"
+            }
+        }
+    }
 
 @app.get("/health")
 def health_check():
