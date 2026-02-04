@@ -2,6 +2,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from recurring import process_recurring_tasks
+from database import engine, Base
+import models
+
+# Create database tables on startup
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
