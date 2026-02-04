@@ -28,6 +28,10 @@ async def startup_event():
     except Exception as e:
         print(f"⚠️ Database initialization error: {e}")
 
+@app.get("/")
+def root():
+    return {"status": "ok", "message": "Todo Phase5 Backend API", "endpoints": ["/health", "/recurring/run", "/docs"]}
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "environment": "production"}
