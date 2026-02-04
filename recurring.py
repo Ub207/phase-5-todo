@@ -1,3 +1,5 @@
+
+# recurring.py
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from database import db_session
@@ -13,7 +15,6 @@ def process_recurring_tasks():
             db_session.add(task)
             created_tasks.append(task.title)
 
-            # Update next_due based on type
             if rule.type == "Daily":
                 rule.next_due = rule.next_due + timedelta(days=1)
             elif rule.type == "Weekly":
