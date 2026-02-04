@@ -1,12 +1,6 @@
 # main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from recurring import process_recurring_tasks
-from database import engine, Base
-import models
-
-# Create database tables on startup
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
@@ -23,12 +17,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database on startup"""
+    try:
+        from database import engine, Base
+        import models
+        Base.metadata.create_all(bind=engine)
+        print("✅ Database initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Database initialization error: {e}")
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "environment": "production"}
 
 @app.get("/recurring/run")
 def run_recurring_tasks():
+    from recurring import process_recurring_tasks
     tasks_created = process_recurring_tasks()
     return {"status": "Recurring tasks executed", "tasks_created": tasks_created}
 
