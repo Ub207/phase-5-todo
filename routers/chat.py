@@ -191,20 +191,105 @@ async def execute_tool_call(tool_name: str, arguments: dict, user: User, db: Ses
         db.rollback()
         return {"success": False, "error": str(e)}
 
+def parse_simple_command(message: str):
+    """Parse simple commands without AI"""
+    message = message.lower().strip()
+
+    # Add task
+    if message.startswith("add "):
+        task_name = message[4:].strip()
+        return {"action": "add", "task": task_name}
+
+    # Delete task
+    if message.startswith("delete ") or message.startswith("remove "):
+        task_name = message.split(" ", 1)[1].strip()
+        return {"action": "delete", "task": task_name}
+
+    # Show/list tasks
+    if message in ["show list", "list", "show tasks", "my tasks", "show"]:
+        return {"action": "list"}
+
+    # Complete task
+    if message.startswith("complete ") or message.startswith("done "):
+        task_name = message.split(" ", 1)[1].strip()
+        return {"action": "complete", "task": task_name}
+
+    return None
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Handle chat messages with AI"""
-
-    if not openai_client:
-        raise HTTPException(status_code=503, detail="AI chat is not configured")
+    """Handle chat messages with or without AI"""
 
     user_id = current_user.id
     message = request.message
 
+    # Try simple command parsing first (works without OpenAI)
+    parsed = parse_simple_command(message)
+
+    if parsed:
+        action = parsed["action"]
+
+        if action == "add":
+            # Create task
+            new_task = Task(
+                title=parsed["task"],
+                user_id=user_id,
+                completed=False
+            )
+            db.add(new_task)
+            db.commit()
+            return ChatResponse(reply=f"✅ Added: {parsed['task']}", tool_calls=[])
+
+        elif action == "delete":
+            # Find and delete task
+            task = db.query(Task).filter(
+                Task.user_id == user_id,
+                Task.title.ilike(f"%{parsed['task']}%")
+            ).first()
+
+            if task:
+                db.delete(task)
+                db.commit()
+                return ChatResponse(reply=f"🗑️ Deleted: {task.title}", tool_calls=[])
+            else:
+                return ChatResponse(reply=f"❌ Task not found: {parsed['task']}", tool_calls=[])
+
+        elif action == "complete":
+            # Find and complete task
+            task = db.query(Task).filter(
+                Task.user_id == user_id,
+                Task.title.ilike(f"%{parsed['task']}%")
+            ).first()
+
+            if task:
+                task.completed = True
+                task.completed_at = datetime.utcnow()
+                db.commit()
+                return ChatResponse(reply=f"✅ Completed: {task.title}", tool_calls=[])
+            else:
+                return ChatResponse(reply=f"❌ Task not found: {parsed['task']}", tool_calls=[])
+
+        elif action == "list":
+            # List all tasks
+            tasks = db.query(Task).filter(Task.user_id == user_id).all()
+            if tasks:
+                task_list = "\n".join([f"- {t.title} {'✅' if t.completed else '⏳'}" for t in tasks])
+                return ChatResponse(reply=f"📝 Your tasks:\n{task_list}", tool_calls=[])
+            else:
+                return ChatResponse(reply="📭 Your list is empty!", tool_calls=[])
+
+    # If OpenAI is not available, return helpful message
+    if not openai_client:
+        return ChatResponse(
+            reply="💡 Try: 'add [task]', 'delete [task]', 'complete [task]', or 'show list'",
+            tool_calls=[]
+        )
+
+    # Try AI mode if OpenAI is available
     # Initialize conversation history for user
     if user_id not in conversations:
         conversations[user_id] = []
