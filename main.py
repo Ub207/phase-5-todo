@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Header
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, tasks, chat
 from database import engine, Base
 from models import User, Task, RecurringRule
+from typing import Optional
 import re
 
 app = FastAPI(title="Todo Phase5 API", version="1.0.0")
@@ -42,5 +43,14 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok", "environment": "production"}
+
+@app.get("/debug/token")
+def debug_token(authorization: Optional[str] = Header(None)):
+    """Debug endpoint to check if token is being received"""
+    return {
+        "authorization_header": authorization,
+        "has_token": authorization is not None,
+        "message": "Check if Authorization header is present"
+    }
 
 
