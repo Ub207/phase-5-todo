@@ -38,4 +38,8 @@ app.include_router(tasks.router)
 def root():
     return {"status": "ok"}
 
+@app.get("/health")
+def health():
+    return {"status": "ok", "environment": "production"}
+
 
