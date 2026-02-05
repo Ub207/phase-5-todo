@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import auth, tasks
+from routers import auth, tasks, chat
 from database import engine, Base
 from models import User, Task, RecurringRule
 import re
@@ -33,6 +33,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(tasks.router)
+app.include_router(chat.router)
 
 @app.get("/")
 def root():
