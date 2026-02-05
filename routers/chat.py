@@ -12,7 +12,7 @@ from auth_utils import get_current_user, get_db
 from models import User, Task
 from datetime import datetime
 
-router = APIRouter(prefix="/api/chat", tags=["chat"])
+router = APIRouter(prefix="/api", tags=["chat"])
 logger = logging.getLogger(__name__)
 
 # Initialize OpenAI client
@@ -191,7 +191,7 @@ async def execute_tool_call(tool_name: str, arguments: dict, user: User, db: Ses
         db.rollback()
         return {"success": False, "error": str(e)}
 
-@router.post("/", response_model=ChatResponse)
+@router.post("/chat", response_model=ChatResponse)
 async def chat(
     request: ChatRequest,
     current_user: User = Depends(get_current_user),
@@ -303,12 +303,12 @@ async def chat(
             tool_calls=[]
         )
 
-@router.get("/history")
+@router.get("/chat/history")
 async def get_chat_history(current_user: User = Depends(get_current_user)):
     """Get chat history for current user"""
     return {"messages": conversations.get(current_user.id, [])}
 
-@router.delete("/history")
+@router.delete("/chat/history")
 async def clear_chat_history(current_user: User = Depends(get_current_user)):
     """Clear chat history for current user"""
     if current_user.id in conversations:
