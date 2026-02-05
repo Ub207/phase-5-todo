@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from main import app
+from mangum import Mangum
 
-# Vercel serverless function handler
-app = app
+# Vercel serverless function handler - wrap FastAPI with Mangum
+handler = Mangum(app, lifespan="off")

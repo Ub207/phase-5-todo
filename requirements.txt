@@ -1,5 +1,6 @@
 fastapi
 uvicorn[standard]
+mangum
 python-dateutil
 sqlalchemy
 psycopg2-binary
