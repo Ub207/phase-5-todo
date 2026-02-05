@@ -3,7 +3,7 @@ uvicorn[standard]
 python-dateutil
 sqlalchemy
 python-jose[cryptography]
-passlib[bcrypt]
-bcrypt>=4.0.0
+passlib==1.7.4
+bcrypt==4.0.1
 python-multipart
 email-validator
