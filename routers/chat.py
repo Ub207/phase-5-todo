@@ -206,8 +206,9 @@ def parse_simple_command(message: str):
         return {"action": "delete", "task": task_name}
 
     # Show/list tasks
-    if message in ["show list", "list", "show tasks", "my tasks", "show"]:
-        return {"action": "list"}
+    if any(keyword in message for keyword in ["show", "list", "my tasks", "view"]):
+        if any(word in message for word in ["list", "tasks", "my"]):
+            return {"action": "list"}
 
     # Complete task
     if message.startswith("complete ") or message.startswith("done "):
