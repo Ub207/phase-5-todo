@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
-from auth import get_current_user, get_db
+from auth_utils import get_current_user, get_db
 from schemas import TaskCreate, TaskUpdate, TaskResponse
 from models import User, Task
 from exceptions import NotFoundException, ForbiddenException

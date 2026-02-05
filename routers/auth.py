@@ -1,7 +1,7 @@
 # routers/auth.py
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from auth import hash_password, verify_password, create_access_token, get_db
+from auth_utils import hash_password, verify_password, create_access_token, get_db
 from schemas import UserCreate, UserLogin, AuthResponse, UserResponse
 from models import User
 from exceptions import ConflictException, UnauthorizedException
