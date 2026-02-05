@@ -6,8 +6,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security.http import HTTPBearer, HTTPAuthorizationCredentials
 from database import SessionLocal
 from models import User
+import os
 
-SECRET_KEY = "SUPER_SECRET_KEY"
+SECRET_KEY = os.getenv("SECRET_KEY", "SUPER_SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 

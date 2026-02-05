@@ -17,6 +17,37 @@ def verify_user_access(user_id: int, current_user: User):
         raise ForbiddenException(detail="You can only access your own tasks")
 
 
+@router.get("", response_model=List[TaskResponse])
+def get_my_tasks(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all tasks for the authenticated user"""
+    tasks = db.query(Task).filter(Task.user_id == current_user.id).order_by(Task.created_at.desc()).all()
+    return tasks
+
+
+@router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
+def create_my_task(
+    task_data: TaskCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Create a new task for the authenticated user"""
+    new_task = Task(
+        title=task_data.title,
+        description=task_data.description,
+        due_date=task_data.due_date,
+        user_id=current_user.id
+    )
+
+    db.add(new_task)
+    db.commit()
+    db.refresh(new_task)
+
+    return new_task
+
+
 @router.get("/{user_id}", response_model=List[TaskResponse])
 def get_tasks(
     user_id: int,
