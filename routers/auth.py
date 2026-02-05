@@ -30,7 +30,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
 
     # Create access token
-    token = create_access_token(data={"sub": new_user.id, "email": new_user.email})
+    token = create_access_token(data={"sub": str(new_user.id), "email": new_user.email})
 
     return AuthResponse(
         user=UserResponse.from_orm(new_user),
@@ -51,7 +51,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
         raise UnauthorizedException(detail="Invalid email or password")
 
     # Create access token
-    token = create_access_token(data={"sub": user.id, "email": user.email})
+    token = create_access_token(data={"sub": str(user.id), "email": user.email})
 
     return AuthResponse(
         user=UserResponse.from_orm(user),
