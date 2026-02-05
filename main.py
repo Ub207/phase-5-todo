@@ -1,9 +1,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routers import auth, tasks
+from database import engine, Base
+from models import User, Task, RecurringRule
 import re
 
 app = FastAPI(title="Todo Phase5 API", version="1.0.0")
+
+# Create database tables on startup
+@app.on_event("startup")
+def startup_event():
+    Base.metadata.create_all(bind=engine)
+    print("Database initialized successfully")
 
 # CORS configuration - allow frontend domains
 origins = [
