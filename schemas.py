@@ -37,6 +37,7 @@ class TaskBase(BaseModel):
     title: str
     description: Optional[str] = None
     due_date: Optional[date] = None
+    priority: Optional[str] = Field("medium", pattern="^(low|medium|high)$")
 
 
 class TaskCreate(TaskBase):
@@ -48,6 +49,7 @@ class TaskUpdate(BaseModel):
     description: Optional[str] = None
     due_date: Optional[date] = None
     completed: Optional[bool] = None
+    priority: Optional[str] = Field(None, pattern="^(low|medium|high)$")
 
 
 class TaskResponse(TaskBase):

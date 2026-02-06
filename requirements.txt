@@ -2,6 +2,7 @@ fastapi
 uvicorn[standard]
 mangum
 python-dateutil
+python-dotenv
 sqlalchemy
 psycopg2-binary
 python-jose[cryptography]

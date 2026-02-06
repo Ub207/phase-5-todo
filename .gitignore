@@ -17,6 +17,8 @@ ENV/
 # Environment
 .env
 .env.local
+.env.production
+.env.*
 
 # IDE
 .vscode/
@@ -38,3 +40,6 @@ htmlcov/
 
 # Backup files
 *.backup
+
+.vercel
+.env*.local

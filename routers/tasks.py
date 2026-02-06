@@ -1,7 +1,8 @@
 # routers/tasks.py
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import or_
+from typing import List, Optional
 from datetime import datetime
 from auth_utils import get_current_user, get_db
 from schemas import TaskCreate, TaskUpdate, TaskResponse
@@ -19,12 +20,53 @@ def verify_user_access(user_id: int, current_user: User):
 
 @router.get("", response_model=List[TaskResponse])
 def get_my_tasks(
+    q: Optional[str] = None,
+    priority: Optional[str] = None,
+    status: Optional[str] = None,
+    overdue: Optional[bool] = None,
+    sort_by: Optional[str] = "created_at",
+    sort_order: Optional[str] = "desc",
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Get all tasks for the authenticated user"""
-    tasks = db.query(Task).filter(Task.user_id == current_user.id).order_by(Task.created_at.desc()).all()
-    return tasks
+    """Get all tasks for the authenticated user with optional search and filters"""
+    query = db.query(Task).filter(Task.user_id == current_user.id)
+
+    # Search in title and description
+    if q:
+        query = query.filter(
+            or_(
+                Task.title.ilike(f"%{q}%"),
+                Task.description.ilike(f"%{q}%")
+            )
+        )
+
+    # Filter by priority
+    if priority:
+        query = query.filter(Task.priority == priority)
+
+    # Filter by status
+    if status == "completed":
+        query = query.filter(Task.completed == True)
+    elif status == "pending":
+        query = query.filter(Task.completed == False)
+
+    # Filter overdue
+    if overdue:
+        today = datetime.utcnow().date()
+        query = query.filter(
+            Task.due_date < today,
+            Task.completed == False
+        )
+
+    # Sort
+    sort_field = getattr(Task, sort_by, Task.created_at)
+    if sort_order == "asc":
+        query = query.order_by(sort_field.asc())
+    else:
+        query = query.order_by(sort_field.desc())
+
+    return query.all()
 
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
@@ -38,6 +80,7 @@ def create_my_task(
         title=task_data.title,
         description=task_data.description,
         due_date=task_data.due_date,
+        priority=task_data.priority,
         user_id=current_user.id
     )
 
@@ -75,6 +118,7 @@ def create_task(
         title=task_data.title,
         description=task_data.description,
         due_date=task_data.due_date,
+        priority=task_data.priority,
         user_id=user_id
     )
 
@@ -107,6 +151,8 @@ def update_task(
         task.description = task_data.description
     if task_data.due_date is not None:
         task.due_date = task_data.due_date
+    if task_data.priority is not None:
+        task.priority = task_data.priority
     if task_data.completed is not None:
         task.completed = task_data.completed
         if task_data.completed and not task.completed_at:

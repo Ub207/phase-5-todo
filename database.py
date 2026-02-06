@@ -1,17 +1,36 @@
 # database.py
 import os
+import re
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.pool import NullPool
 
 # Get database URL from environment variable or use SQLite for local dev
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if DATABASE_URL:
     # PostgreSQL for production (Vercel/Neon)
+
+    # Clean up wrapped format: psql 'postgresql://...' -> postgresql://...
+    if "psql" in DATABASE_URL:
+        match = re.search(r"postgresql://[^'\"]+", DATABASE_URL)
+        if match:
+            DATABASE_URL = match.group(0)
+
     # Fix for Neon: replace postgres:// with postgresql://
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-    engine = create_engine(DATABASE_URL)
+
+    # Serverless-optimized connection settings
+    engine = create_engine(
+        DATABASE_URL,
+        poolclass=NullPool,  # No connection pooling for serverless
+        pool_pre_ping=True,  # Verify connections before using
+        connect_args={
+            "connect_timeout": 10,
+            "options": "-c timezone=utc"
+        }
+    )
 else:
     # SQLite for local development
     if os.name == "nt":  # Windows

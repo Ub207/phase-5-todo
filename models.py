@@ -22,10 +22,11 @@ class Task(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, index=True)
     description = Column(Text, nullable=True)
-    due_date = Column(Date, nullable=True)
+    due_date = Column(Date, nullable=True, index=True)
     completed = Column(Boolean, default=False)
     completed_at = Column(DateTime, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # Nullable for backward compatibility
+    priority = Column(String, default="medium", index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
