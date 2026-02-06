@@ -30,7 +30,15 @@ def get_my_tasks(
     db: Session = Depends(get_db)
 ):
     """Get all tasks for the authenticated user with optional search and filters"""
-    query = db.query(Task).filter(Task.user_id == current_user.id)
+    import logging
+    logger = logging.getLogger(__name__)
+
+    try:
+        logger.info(f"Getting tasks for user {current_user.id}")
+        query = db.query(Task).filter(Task.user_id == current_user.id)
+    except Exception as e:
+        logger.error(f"Error in get_my_tasks: {str(e)}", exc_info=True)
+        raise
 
     # Search in title and description
     if q:
@@ -60,13 +68,20 @@ def get_my_tasks(
         )
 
     # Sort
-    sort_field = getattr(Task, sort_by, Task.created_at)
-    if sort_order == "asc":
-        query = query.order_by(sort_field.asc())
-    else:
-        query = query.order_by(sort_field.desc())
+    try:
+        sort_field = getattr(Task, sort_by, Task.created_at)
+        if sort_order == "asc":
+            query = query.order_by(sort_field.asc())
+        else:
+            query = query.order_by(sort_field.desc())
 
-    return query.all()
+        logger.info(f"Executing query for user {current_user.id}")
+        result = query.all()
+        logger.info(f"Found {len(result)} tasks for user {current_user.id}")
+        return result
+    except Exception as e:
+        logger.error(f"Error executing query: {str(e)}", exc_info=True)
+        raise
 
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
@@ -76,19 +91,29 @@ def create_my_task(
     db: Session = Depends(get_db)
 ):
     """Create a new task for the authenticated user"""
-    new_task = Task(
-        title=task_data.title,
-        description=task_data.description,
-        due_date=task_data.due_date,
-        priority=task_data.priority,
-        user_id=current_user.id
-    )
+    import logging
+    logger = logging.getLogger(__name__)
 
-    db.add(new_task)
-    db.commit()
-    db.refresh(new_task)
+    try:
+        logger.info(f"Creating task for user {current_user.id}: {task_data.title}")
+        new_task = Task(
+            title=task_data.title,
+            description=task_data.description,
+            due_date=task_data.due_date,
+            priority=task_data.priority,
+            user_id=current_user.id
+        )
 
-    return new_task
+        db.add(new_task)
+        db.commit()
+        db.refresh(new_task)
+
+        logger.info(f"Task created successfully: {new_task.id}")
+        return new_task
+    except Exception as e:
+        logger.error(f"Error creating task: {str(e)}", exc_info=True)
+        db.rollback()
+        raise
 
 
 @router.get("/{user_id}", response_model=List[TaskResponse])
