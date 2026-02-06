@@ -10,7 +10,10 @@ import os
 
 SECRET_KEY = os.getenv("SECRET_KEY", "SUPER_SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+try:
+    ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "43200"))
+except (ValueError, TypeError):
+    ACCESS_TOKEN_EXPIRE_MINUTES = 43200
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
