@@ -62,3 +62,43 @@ class TaskResponse(TaskBase):
 
     class Config:
         from_attributes = True
+
+
+# Recurring Rule Schemas
+class RecurringRuleBase(BaseModel):
+    title: str
+    description: Optional[str] = None
+    frequency: str = Field(..., pattern="^(daily|weekly|monthly)$")
+    interval: int = Field(1, ge=1, le=365, description="Repeat every N days/weeks/months")
+    weekdays: Optional[str] = Field(None, description="Comma-separated weekdays (0=Mon, 6=Sun): e.g. '0,2,4'")
+    day_of_month: Optional[int] = Field(None, ge=1, le=31, description="Day of month for monthly recurrence")
+    priority: Optional[str] = Field("medium", pattern="^(low|medium|high)$")
+    next_due: date
+
+
+class RecurringRuleCreate(RecurringRuleBase):
+    pass
+
+
+class RecurringRuleUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    frequency: Optional[str] = Field(None, pattern="^(daily|weekly|monthly)$")
+    interval: Optional[int] = Field(None, ge=1, le=365)
+    weekdays: Optional[str] = None
+    day_of_month: Optional[int] = Field(None, ge=1, le=31)
+    priority: Optional[str] = Field(None, pattern="^(low|medium|high)$")
+    next_due: Optional[date] = None
+    active: Optional[bool] = None
+
+
+class RecurringRuleResponse(RecurringRuleBase):
+    id: int
+    user_id: int
+    interval: int
+    active: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

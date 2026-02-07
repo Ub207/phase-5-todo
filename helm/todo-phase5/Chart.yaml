@@ -1,0 +1,16 @@
+apiVersion: v2
+name: todo-phase5
+description: A Helm chart for Todo Phase5 application with Kafka and Dapr
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - todo
+  - fastapi
+  - kafka
+  - dapr
+  - websocket
+maintainers:
+  - name: Todo Team
+    email: team@todo-phase5.com
+dependencies: []

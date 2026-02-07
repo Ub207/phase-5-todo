@@ -1,13 +1,11 @@
 @echo off
 echo ============================================================
-echo Starting Backend Server for Recurring Tasks Testing
+echo Starting Todo Phase 5 Backend Server
 echo ============================================================
 echo.
 
-cd ..\todo_phase3\backend
-
-echo Checking if database migrations are up to date...
-python -c "print('Database check...')"
+echo Activating virtual environment...
+call venv\Scripts\activate.bat
 
 echo.
 echo Starting FastAPI server on http://localhost:8000
@@ -17,4 +15,4 @@ echo Press CTRL+C to stop the server
 echo ============================================================
 echo.
 
-start "" python -m uvicorn src.main:app --reload --port 8000
+uvicorn main:app --reload --port 8000

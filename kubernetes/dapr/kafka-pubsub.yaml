@@ -1,0 +1,24 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: kafka-pubsub
+  namespace: todo-phase5
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "todo-kafka-kafka-bootstrap:9092"
+  - name: authType
+    value: "none"
+  - name: consumerGroup
+    value: "todo-phase5-consumers"
+  - name: clientId
+    value: "todo-phase5"
+  - name: maxMessageBytes
+    value: "1024000"
+  - name: consumeRetryInterval
+    value: "200ms"
+scopes:
+- todo-backend
+- kafka-consumer

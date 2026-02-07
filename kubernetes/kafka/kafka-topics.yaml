@@ -1,0 +1,45 @@
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: task-events
+  namespace: todo-phase5
+  labels:
+    strimzi.io/cluster: todo-kafka
+spec:
+  partitions: 3
+  replicas: 2
+  config:
+    retention.ms: 604800000  # 7 days
+    segment.bytes: 1073741824
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: task-updates
+  namespace: todo-phase5
+  labels:
+    strimzi.io/cluster: todo-kafka
+spec:
+  partitions: 3
+  replicas: 2
+  config:
+    retention.ms: 604800000
+    segment.bytes: 1073741824
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: reminders
+  namespace: todo-phase5
+  labels:
+    strimzi.io/cluster: todo-kafka
+spec:
+  partitions: 3
+  replicas: 2
+  config:
+    retention.ms: 2592000000  # 30 days
+    segment.bytes: 1073741824
+    cleanup.policy: delete

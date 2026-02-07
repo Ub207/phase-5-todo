@@ -36,6 +36,17 @@ class RecurringRule(Base):
     __tablename__ = "recurring_rules"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String)
-    type = Column(String)  # "Daily", "Weekly", "Monthly"
-    next_due = Column(Date)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    frequency = Column(String, nullable=False)  # "daily", "weekly", "monthly"
+    interval = Column(Integer, default=1)  # Every N days/weeks/months
+    weekdays = Column(String, nullable=True)  # Comma-separated: "1,3,5" for Mon,Wed,Fri
+    day_of_month = Column(Integer, nullable=True)  # Day of month for monthly (1-31)
+    priority = Column(String, default="medium")
+    next_due = Column(Date, nullable=False)
+    active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", backref="recurring_rules")

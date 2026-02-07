@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "todo-phase5.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "todo-phase5.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "todo-phase5.selectorLabels" . | nindent 4 }}
+    app: todo-backend

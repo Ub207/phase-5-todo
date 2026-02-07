@@ -8,6 +8,8 @@ from auth_utils import get_current_user, get_db
 from schemas import TaskCreate, TaskUpdate, TaskResponse
 from models import User, Task
 from exceptions import NotFoundException, ForbiddenException
+from events import publish_event
+import event_handlers  # Import to register handlers
 
 router = APIRouter(prefix="/api/tasks", tags=["Tasks"])
 
@@ -109,6 +111,18 @@ def create_my_task(
         db.refresh(new_task)
 
         logger.info(f"Task created successfully: {new_task.id}")
+
+        # Publish task_created event
+        publish_event("task_created", {
+            "id": new_task.id,
+            "title": new_task.title,
+            "description": new_task.description,
+            "priority": new_task.priority,
+            "due_date": str(new_task.due_date) if new_task.due_date else None,
+            "user_id": new_task.user_id,
+            "created_at": str(new_task.created_at),
+        })
+
         return new_task
     except Exception as e:
         logger.error(f"Error creating task: {str(e)}", exc_info=True)
@@ -151,6 +165,17 @@ def create_task(
     db.commit()
     db.refresh(new_task)
 
+    # Publish task_created event
+    publish_event("task_created", {
+        "id": new_task.id,
+        "title": new_task.title,
+        "description": new_task.description,
+        "priority": new_task.priority,
+        "due_date": str(new_task.due_date) if new_task.due_date else None,
+        "user_id": new_task.user_id,
+        "created_at": str(new_task.created_at),
+    })
+
     return new_task
 
 
@@ -169,6 +194,10 @@ def update_task(
     if not task:
         raise NotFoundException(detail="Task not found")
 
+    # Track if task is being completed
+    was_completed = task.completed
+    is_now_completed = False
+
     # Update only provided fields
     if task_data.title is not None:
         task.title = task_data.title
@@ -182,11 +211,25 @@ def update_task(
         task.completed = task_data.completed
         if task_data.completed and not task.completed_at:
             task.completed_at = datetime.utcnow()
+            is_now_completed = True
         elif not task_data.completed:
             task.completed_at = None
 
     db.commit()
     db.refresh(task)
+
+    # Publish task_completed event if task was just completed
+    if is_now_completed and not was_completed:
+        publish_event("task_completed", {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "priority": task.priority,
+            "user_id": task.user_id,
+            "completed_at": str(task.completed_at),
+            "recurring_enabled": task.recurring_enabled,
+            "recurring_pattern": task.recurring_pattern,
+        })
 
     return task
 
@@ -205,11 +248,25 @@ def complete_task(
     if not task:
         raise NotFoundException(detail="Task not found")
 
+    was_completed = task.completed
     task.completed = True
     task.completed_at = datetime.utcnow()
 
     db.commit()
     db.refresh(task)
+
+    # Publish task_completed event if task was not already completed
+    if not was_completed:
+        publish_event("task_completed", {
+            "id": task.id,
+            "title": task.title,
+            "description": task.description,
+            "priority": task.priority,
+            "user_id": task.user_id,
+            "completed_at": str(task.completed_at),
+            "recurring_enabled": task.recurring_enabled,
+            "recurring_pattern": task.recurring_pattern,
+        })
 
     return task
 

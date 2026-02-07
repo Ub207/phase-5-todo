@@ -1,0 +1,13 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: statestore
+  namespace: todo-phase5
+spec:
+  type: state.postgresql
+  version: v1
+  metadata:
+  - name: connectionString
+    value: "host=postgres user=todouser password=todopass123 dbname=todo_phase5 port=5432 sslmode=disable TimeZone=Asia/Shanghai"
+scopes:
+- todo-backend

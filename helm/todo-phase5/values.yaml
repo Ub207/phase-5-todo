@@ -1,0 +1,120 @@
+# Default values for todo-phase5
+replicaCount: 2
+
+image:
+  repository: todo-phase5-backend
+  pullPolicy: Never  # For Minikube, use Never
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  dapr.io/enabled: "true"
+  dapr.io/app-id: "todo-backend"
+  dapr.io/app-port: "8000"
+  dapr.io/app-protocol: "http"
+  dapr.io/enable-api-logging: "true"
+  dapr.io/log-level: "info"
+  dapr.io/config: "daprconfig"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: todo-phase5.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+env:
+  - name: DATABASE_URL
+    value: "postgresql://todouser:todopass123@postgres:5432/todo_phase5"
+  - name: KAFKA_BOOTSTRAP_SERVERS
+    value: "todo-kafka-kafka-bootstrap:9092"
+  - name: SECRET_KEY
+    value: "your-secret-key-change-in-production"
+  - name: ALGORITHM
+    value: "HS256"
+  - name: ACCESS_TOKEN_EXPIRE_MINUTES
+    value: "43200"
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Kafka Consumer Configuration
+kafkaConsumer:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: todo-phase5-backend
+    tag: "latest"
+    pullPolicy: Never
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi

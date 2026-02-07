@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { todoApi } from '@/lib/api';
+import { chatApi, taskApi } from '@/lib/api';
 
 interface Message {
   type: 'user' | 'ai';
@@ -9,7 +9,11 @@ interface Message {
   timestamp: Date;
 }
 
-export default function ChatInterface() {
+interface ChatInterfaceProps {
+  onTaskCreated?: () => void;
+}
+
+export default function ChatInterface({ onTaskCreated }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,34 +28,50 @@ export default function ChatInterface() {
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setLoading(true);
 
     try {
-      // Try to run the task with AI agent
-      const response = await todoApi.runTask(input);
+      // Try to send message to chat API
+      const response = await chatApi.sendMessage(userInput);
 
       const aiMessage: Message = {
         type: 'ai',
-        content: response.result || 'Task processed successfully!',
+        content: response.response || 'Message processed!',
         timestamp: new Date(),
       };
 
       setMessages((prev) => [...prev, aiMessage]);
+
+      // If a task was created, notify parent to refresh
+      if (response.task_created && onTaskCreated) {
+        onTaskCreated();
+      }
     } catch (err: any) {
-      // If AI agent fails, try to add as a simple todo
+      // If chat fails, try to create as simple task
       try {
-        const addResponse = await todoApi.addTodo(input);
+        // Parse simple task creation patterns
+        const task = await taskApi.createTask({
+          title: userInput,
+          priority: 'medium',
+        });
+
         const aiMessage: Message = {
           type: 'ai',
-          content: addResponse.message,
+          content: `Task created: "${task.title}"`,
           timestamp: new Date(),
         };
+
         setMessages((prev) => [...prev, aiMessage]);
-      } catch (addErr) {
+
+        if (onTaskCreated) {
+          onTaskCreated();
+        }
+      } catch (createErr: any) {
         const errorMessage: Message = {
           type: 'ai',
-          content: 'Sorry, I encountered an error. Please make sure the backend is running.',
+          content: createErr.response?.data?.detail || 'Sorry, I encountered an error. Please try again.',
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
@@ -76,7 +96,9 @@ export default function ChatInterface() {
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 italic mt-8">
             <p>Start chatting with your AI assistant!</p>
-            <p className="text-sm mt-2">Try: "Add a task to buy groceries" or "Remind me to call mom"</p>
+            <p className="text-sm mt-2">
+              Try: "Add a task to buy groceries" or "Create a high priority task to call mom"
+            </p>
           </div>
         ) : (
           messages.map((msg, index) => (
@@ -91,7 +113,7 @@ export default function ChatInterface() {
                     : 'bg-gray-100 text-gray-800'
                 }`}
               >
-                <p className="text-sm">{msg.content}</p>
+                <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                 <p className="text-xs mt-1 opacity-70">
                   {msg.timestamp.toLocaleTimeString()}
                 </p>

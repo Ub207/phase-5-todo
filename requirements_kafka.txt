@@ -1,0 +1,35 @@
+# FastAPI Backend with Kafka Integration - Requirements
+# Install with: pip install -r requirements_kafka.txt
+
+# Core FastAPI
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.12.0
+psycopg2-binary>=2.9.0
+
+# Email validation
+email-validator>=2.0.0
+
+# OpenAI for chat
+openai>=1.0.0
+
+# Authentication
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+bcrypt==4.1.2
+
+# Kafka
+kafka-python>=2.0.2
+
+# WebSocket support (included in uvicorn[standard])
+websockets>=12.0
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Date/Time utilities
+python-dateutil>=2.8.2
