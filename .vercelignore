@@ -33,3 +33,19 @@ ENV/
 # Testing
 test_*.py
 *_test.py
+
+# Backend files (deployed separately on Koyeb)
+api/
+routers/
+*.py
+main.py
+database.py
+models.py
+schemas.py
+auth_utils.py
+Dockerfile
+docker-compose.yml
+requirements*.txt
+kafka_service.py
+event_handlers.py
+websocket_manager*.py
