@@ -76,8 +76,12 @@ affinity: {}
 env:
   - name: DATABASE_URL
     value: "postgresql://todouser:todopass123@postgres:5432/todo_phase5"
+  - name: ENVIRONMENT
+    value: "production"
   - name: KAFKA_BOOTSTRAP_SERVERS
     value: "todo-kafka-kafka-bootstrap:9092"
+  - name: REDIS_URL
+    value: "redis://redis:6379"
   - name: SECRET_KEY
     value: "your-secret-key-change-in-production"
   - name: ALGORITHM

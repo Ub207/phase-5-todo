@@ -13,6 +13,16 @@ import logging
 import event_handlers  # Initialize event system
 from kafka_service import kafka_service  # Kafka consumer service
 
+# Import Redis WebSocket manager (with fallback to in-memory mode)
+try:
+    from websocket_manager_redis import manager as websocket_manager
+    REDIS_WEBSOCKET_ENABLED = True
+except ImportError:
+    from websocket_manager import manager as websocket_manager
+    REDIS_WEBSOCKET_ENABLED = False
+    logger = logging.getLogger(__name__)
+    logger.warning("⚠️ Redis WebSocket manager not available, using in-memory mode")
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -69,6 +79,14 @@ async def startup_event():
     # Initialize Kafka producer (optional)
     init_kafka_producer()
 
+    # Initialize Redis WebSocket manager (if Redis-enabled)
+    if REDIS_WEBSOCKET_ENABLED:
+        try:
+            await websocket_manager.startup()
+            logger.info("✅ Redis WebSocket manager initialized")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to initialize Redis WebSocket manager: {e}")
+
     # Start Kafka consumer in background (optional)
     if kafka_available:
         try:
@@ -82,7 +100,16 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Gracefully shutdown Kafka consumer on application shutdown"""
+    """Gracefully shutdown Kafka consumer and Redis on application shutdown"""
+    # Shutdown Redis WebSocket manager
+    if REDIS_WEBSOCKET_ENABLED:
+        try:
+            await websocket_manager.shutdown()
+            logger.info("✅ Redis WebSocket manager shutdown")
+        except Exception as e:
+            logger.warning(f"⚠️ Error shutting down Redis WebSocket manager: {e}")
+
+    # Shutdown Kafka consumer
     if kafka_available:
         try:
             kafka_service.stop()

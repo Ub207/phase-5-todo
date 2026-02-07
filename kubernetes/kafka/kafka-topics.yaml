@@ -1,4 +1,5 @@
 ---
+# Task Events Topic - Primary event stream
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
@@ -7,13 +8,27 @@ metadata:
   labels:
     strimzi.io/cluster: todo-kafka
 spec:
-  partitions: 3
-  replicas: 2
+  partitions: 3  # Scale based on throughput (1000-2000 msgs/sec per partition)
+  replicas: 2    # Minimum 2 for production (3 recommended for critical data)
   config:
-    retention.ms: 604800000  # 7 days
-    segment.bytes: 1073741824
+    # Retention
+    retention.ms: 604800000  # 7 days (604800000 ms)
+    retention.bytes: 1073741824  # 1GB per partition
+    segment.bytes: 536870912  # 512MB segment size
     cleanup.policy: delete
+
+    # Performance
+    compression.type: snappy  # Balance between speed and compression
+    min.insync.replicas: 2  # Require 2 replicas for acks=all
+
+    # Durability (production settings)
+    unclean.leader.election.enable: false  # Prevent data loss
+    min.compaction.lag.ms: 0
+
+    # Message size limits
+    max.message.bytes: 1048576  # 1MB max message size
 ---
+# Task Updates Topic - State changes
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
@@ -25,10 +40,16 @@ spec:
   partitions: 3
   replicas: 2
   config:
-    retention.ms: 604800000
-    segment.bytes: 1073741824
+    retention.ms: 604800000  # 7 days
+    retention.bytes: 1073741824
+    segment.bytes: 536870912
     cleanup.policy: delete
+    compression.type: snappy
+    min.insync.replicas: 2
+    unclean.leader.election.enable: false
+    max.message.bytes: 1048576
 ---
+# Reminders Topic - Scheduled notifications
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
@@ -40,6 +61,29 @@ spec:
   partitions: 3
   replicas: 2
   config:
-    retention.ms: 2592000000  # 30 days
+    retention.ms: 2592000000  # 30 days (longer for scheduled events)
+    retention.bytes: 2147483648  # 2GB
+    segment.bytes: 536870912
+    cleanup.policy: delete
+    compression.type: snappy
+    min.insync.replicas: 2
+    unclean.leader.election.enable: false
+    max.message.bytes: 1048576
+---
+# Dead Letter Queue for Failed Events
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: task-events-dlq
+  namespace: todo-phase5
+  labels:
+    strimzi.io/cluster: todo-kafka
+spec:
+  partitions: 1  # DLQ typically needs fewer partitions
+  replicas: 2
+  config:
+    retention.ms: 2592000000  # 30 days (longer retention for investigation)
     segment.bytes: 1073741824
     cleanup.policy: delete
+    # Compression for DLQ (contains error details)
+    compression.type: gzip

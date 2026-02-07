@@ -1,11 +1,17 @@
 """
 Kafka Consumer Service - Runs as a background task in FastAPI
 Consumes events from Kafka and updates the database in real-time
+
+Supports:
+- Plain (no auth)
+- SASL/SCRAM authentication
+- SSL/TLS encryption
 """
+import os
 import asyncio
 import json
 import logging
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from kafka import KafkaConsumer
 from kafka.errors import KafkaError
 from sqlalchemy.orm import Session
@@ -23,29 +29,90 @@ class KafkaConsumerService:
     """
     Kafka consumer service that runs as a background task in FastAPI.
     Consumes events from Kafka topics and updates the database.
+
+    Supports authentication via environment variables:
+    - KAFKA_BOOTSTRAP_SERVERS: Broker addresses (default: localhost:9092)
+    - KAFKA_SASL_MECHANISM: SASL mechanism (PLAIN, SCRAM-SHA-256, SCRAM-SHA-512)
+    - KAFKA_SASL_USERNAME: SASL username
+    - KAFKA_SASL_PASSWORD: SASL password
+    - KAFKA_SECURITY_PROTOCOL: Security protocol (PLAINTEXT, SASL_PLAINTEXT, SASL_SSL, SSL)
+    - KAFKA_SSL_CAFILE: Path to CA certificate file
+    - KAFKA_SSL_CERTFILE: Path to client certificate file
+    - KAFKA_SSL_KEYFILE: Path to client key file
     """
 
-    def __init__(self, bootstrap_servers: str = "localhost:9092"):
-        self.bootstrap_servers = bootstrap_servers
+    def __init__(
+        self,
+        bootstrap_servers: Optional[str] = None,
+        sasl_mechanism: Optional[str] = None,
+        sasl_username: Optional[str] = None,
+        sasl_password: Optional[str] = None,
+        security_protocol: Optional[str] = None,
+    ):
+        # Get configuration from environment or use defaults
+        self.bootstrap_servers = bootstrap_servers or os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
+        self.sasl_mechanism = sasl_mechanism or os.getenv("KAFKA_SASL_MECHANISM")
+        self.sasl_username = sasl_username or os.getenv("KAFKA_SASL_USERNAME")
+        self.sasl_password = sasl_password or os.getenv("KAFKA_SASL_PASSWORD")
+        self.security_protocol = security_protocol or os.getenv("KAFKA_SECURITY_PROTOCOL", "PLAINTEXT")
+
+        # SSL/TLS configuration
+        self.ssl_cafile = os.getenv("KAFKA_SSL_CAFILE")
+        self.ssl_certfile = os.getenv("KAFKA_SSL_CERTFILE")
+        self.ssl_keyfile = os.getenv("KAFKA_SSL_KEYFILE")
+
         self.consumer = None
         self.running = False
 
+        # Log configuration (without passwords)
+        logger.info(f"Kafka config: servers={self.bootstrap_servers}, "
+                   f"security={self.security_protocol}, sasl={self.sasl_mechanism or 'None'}")
+
     def create_consumer(self):
-        """Create and configure the Kafka consumer"""
+        """Create and configure the Kafka consumer with authentication support"""
         try:
+            # Base configuration
+            config = {
+                'bootstrap_servers': [self.bootstrap_servers],
+                'auto_offset_reset': 'latest',
+                'enable_auto_commit': True,
+                'group_id': 'fastapi-backend-consumer',
+                'value_deserializer': lambda m: json.loads(m.decode('utf-8')),
+                'consumer_timeout_ms': 1000,
+                'security_protocol': self.security_protocol,
+            }
+
+            # Add SASL configuration if enabled
+            if self.sasl_mechanism and self.sasl_username and self.sasl_password:
+                config['sasl_mechanism'] = self.sasl_mechanism
+                config['sasl_plain_username'] = self.sasl_username
+                config['sasl_plain_password'] = self.sasl_password
+                logger.info(f"✅ SASL authentication enabled: {self.sasl_mechanism}")
+
+            # Add SSL/TLS configuration if enabled
+            if self.security_protocol in ['SSL', 'SASL_SSL']:
+                if self.ssl_cafile:
+                    config['ssl_cafile'] = self.ssl_cafile
+                if self.ssl_certfile:
+                    config['ssl_certfile'] = self.ssl_certfile
+                if self.ssl_keyfile:
+                    config['ssl_keyfile'] = self.ssl_keyfile
+                logger.info("✅ SSL/TLS encryption enabled")
+
+            # Create consumer with configuration
             self.consumer = KafkaConsumer(
                 'task-events',  # Primary topic
-                bootstrap_servers=[self.bootstrap_servers],
-                auto_offset_reset='latest',  # Only consume new messages
-                enable_auto_commit=True,
-                group_id='fastapi-backend-consumer',
-                value_deserializer=lambda m: json.loads(m.decode('utf-8')),
-                consumer_timeout_ms=1000  # Timeout to allow graceful shutdown
+                **config
             )
+
             logger.info(f"✅ Kafka consumer created successfully: {self.bootstrap_servers}")
             return True
+
         except KafkaError as e:
             logger.error(f"❌ Failed to create Kafka consumer: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"❌ Unexpected error creating Kafka consumer: {e}")
             return False
 
     def handle_task_created(self, db: Session, event_data: Dict[str, Any]) -> None:
@@ -170,20 +237,72 @@ class KafkaConsumerService:
             db.rollback()
             logger.error(f"Unexpected error while completing task: {e}")
 
-    def process_event(self, message: Dict[str, Any]) -> None:
+    def send_to_dlq(self, message: Dict[str, Any], error: str) -> None:
+        """
+        Send failed message to Dead Letter Queue.
+
+        Args:
+            message: Original message that failed processing
+            error: Error description
+        """
+        try:
+            from kafka import KafkaProducer
+            import json as json_lib
+
+            # Create DLQ producer (lazy initialization)
+            if not hasattr(self, 'dlq_producer'):
+                self.dlq_producer = KafkaProducer(
+                    bootstrap_servers=[self.bootstrap_servers],
+                    value_serializer=lambda v: json_lib.dumps(v).encode('utf-8'),
+                    security_protocol=self.security_protocol,
+                )
+
+                # Add auth if configured
+                if self.sasl_mechanism and self.sasl_username and self.sasl_password:
+                    self.dlq_producer.config['sasl_mechanism'] = self.sasl_mechanism
+                    self.dlq_producer.config['sasl_plain_username'] = self.sasl_username
+                    self.dlq_producer.config['sasl_plain_password'] = self.sasl_password
+
+            # Prepare DLQ message with metadata
+            dlq_message = {
+                'original_message': message,
+                'error': error,
+                'timestamp': datetime.utcnow().isoformat(),
+                'topic': 'task-events',
+                'consumer_group': 'fastapi-backend-consumer'
+            }
+
+            # Send to DLQ topic
+            self.dlq_producer.send('task-events-dlq', value=dlq_message)
+            self.dlq_producer.flush()
+
+            logger.error(f"❌ Message sent to DLQ: {error}")
+
+        except Exception as e:
+            logger.error(f"Failed to send message to DLQ: {e}")
+
+    def process_event(self, message: Dict[str, Any], retry_count: int = 0, max_retries: int = 3) -> bool:
         """
         Process incoming Kafka event and route to appropriate handler.
+        Includes retry logic and DLQ on failure.
 
         Args:
             message: Deserialized Kafka message
+            retry_count: Current retry attempt
+            max_retries: Maximum number of retries before sending to DLQ
+
+        Returns:
+            bool: True if processing succeeded, False if failed
         """
         event_type = message.get('event_type') or message.get('type')
 
         if not event_type:
-            logger.warning(f"Event missing 'event_type' or 'type' field: {message}")
-            return
+            error_msg = f"Event missing 'event_type' or 'type' field: {message}"
+            logger.warning(error_msg)
+            self.send_to_dlq(message, error_msg)
+            return False
 
-        logger.info(f"📩 Processing Kafka event: {event_type}")
+        logger.info(f"📩 Processing Kafka event: {event_type} (attempt {retry_count + 1}/{max_retries + 1})")
 
         # Create database session for this event
         db = SessionLocal()
@@ -197,7 +316,29 @@ class KafkaConsumerService:
                 event_data = message.get('data', message)
                 self.handle_task_completed(db, event_data)
             else:
-                logger.warning(f"Unknown event type: {event_type}")
+                error_msg = f"Unknown event type: {event_type}"
+                logger.warning(error_msg)
+                self.send_to_dlq(message, error_msg)
+                return False
+
+            return True
+
+        except Exception as e:
+            logger.error(f"Error processing event: {e}", exc_info=True)
+
+            # Retry with exponential backoff
+            if retry_count < max_retries:
+                import time
+                backoff_seconds = 2 ** retry_count  # 1s, 2s, 4s
+                logger.info(f"⏳ Retrying in {backoff_seconds}s...")
+                time.sleep(backoff_seconds)
+                return self.process_event(message, retry_count + 1, max_retries)
+            else:
+                # Max retries exceeded - send to DLQ
+                error_msg = f"Failed after {max_retries + 1} attempts: {str(e)}"
+                self.send_to_dlq(message, error_msg)
+                return False
+
         finally:
             db.close()
 
