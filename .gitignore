@@ -27,6 +27,11 @@ ENV/
 *.swo
 .claude/
 
+# OS Files
+nul
+.DS_Store
+Thumbs.db
+
 # Testing
 .pytest_cache/
 htmlcov/
