@@ -7,7 +7,7 @@ surface: agent
 model: claude-sonnet-4-5-20250929
 feature: recurring-tasks
 branch: 001-fuel-consumption-pwa
-user: Hanif8193
+user: Ub207
 command: /sp.implement recurring-tasks
 labels: ["implementation", "backend", "database", "api", "dapr"]
 links:

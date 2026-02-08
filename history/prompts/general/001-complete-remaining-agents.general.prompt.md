@@ -7,7 +7,7 @@ surface: agent
 model: claude-sonnet-4-5-20250929
 feature: none
 branch: 001-fuel-consumption-pwa
-user: Hanif8193
+user: Ub207
 command: none
 labels: ["agents", "implementation", "sdd-ri", "tasks-agent", "implementation-agent"]
 links:

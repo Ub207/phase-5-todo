@@ -123,7 +123,8 @@ async def shutdown_event():
 # ---------------------------
 origins = [
     "http://localhost:3000",
-    "https://frontend-hazel-gamma-xtb0q17d6f.vercel.app",
+    "https://phase-5-todo.vercel.app",
+    "https://phase-5-todo-ub207.vercel.app",
 ]
 
 allow_origin_regex = r"https://.*\.vercel\.app"
