@@ -105,7 +105,12 @@ export const authApi = {
   getCurrentUser: (): User | null => {
     if (typeof window === 'undefined') return null;
     const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
+    if (!userStr || userStr === 'undefined') return null;
+    try {
+      return JSON.parse(userStr);
+    } catch {
+      return null;
+    }
   },
 
   getToken: (): string | null => {
