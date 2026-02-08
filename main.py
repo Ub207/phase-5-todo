@@ -125,6 +125,7 @@ origins = [
     "http://localhost:3000",
     "https://phase-5-todo.vercel.app",
     "https://phase-5-todo-ub207.vercel.app",
+    "https://ubaid-ai-todo-phase-5.hf.space",
 ]
 
 allow_origin_regex = r"https://.*\.vercel\.app"
