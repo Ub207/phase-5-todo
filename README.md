@@ -1,3 +1,12 @@
+---
+title: Todo Phase 5
+emoji: ✅
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+---
+
 # Todo Phase 5 - Event-Driven Task Management System
 
 A production-ready FastAPI backend with Kafka event streaming, WebSocket real-time updates, and Kubernetes deployment.
