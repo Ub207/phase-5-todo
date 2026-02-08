@@ -1,53 +1,28 @@
-# Multi-stage build for Todo Phase5 Backend
-FROM python:3.11-slim as builder
+FROM python:3.11-slim
 
-# Set working directory
 WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy requirements
-COPY requirements_kafka.txt .
-
-# Install Python dependencies
-RUN pip install --no-cache-dir --user -r requirements_kafka.txt
-
-# Final stage
-FROM python:3.11-slim
-
-# Set working directory
-WORKDIR /app
-
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    postgresql-client \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python dependencies from builder
-COPY --from=builder /root/.local /root/.local
+# Copy and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY . .
 
-# Make sure scripts are executable
-RUN chmod +x start_backend.bat || true
-
-# Set environment variables
-ENV PATH=/root/.local/bin:$PATH
+# Environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Expose port (7860 for Hugging Face Spaces)
+# HF Spaces uses port 7860
 EXPOSE 7860
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:7860/health || exit 1
 
-# Run application (port 7860 for Hugging Face Spaces)
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]

@@ -123,8 +123,7 @@ async def shutdown_event():
 # ---------------------------
 origins = [
     "http://localhost:3000",
-    "https://phase-5-todo.vercel.app",
-    "https://phase-5-todo-ub207.vercel.app",
+    "https://phase-5-todo-theta.vercel.app",
     "https://ubaid-ai-todo-phase-5.hf.space",
 ]
 
